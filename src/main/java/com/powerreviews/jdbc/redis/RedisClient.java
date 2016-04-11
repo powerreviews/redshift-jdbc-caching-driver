@@ -27,6 +27,8 @@ public class RedisClient {
     private Jedis jedisClient;
     private String validationQuery;
     private Double redisObjectMaxSize;
+    private Integer redisExpiration;
+    private Integer redisIndex;
 
     /**
      * Creates a RedisClient object and initializes a connection with the Redis server
@@ -47,6 +49,14 @@ public class RedisClient {
         String redisPassword = (String)fullProperties.get("redisPassword");
         log.debug("Redis Password: {}", redisPassword);
 
+        this.redisExpiration = fullProperties.get("redisExpiration") != null ?
+                                Integer.parseInt((String)fullProperties.get("redisExpiration")) : null;
+        log.debug("Redis Expiration seconds: {}", redisExpiration);
+
+        this.redisIndex = fullProperties.get("redisIndex") != null ?
+                Integer.parseInt((String)fullProperties.get("redisIndex")) : null;
+        log.debug("Redis Index: {}", redisIndex);
+
         this.redisObjectMaxSize = fullProperties.get("redisObjectMaxSizeKB") != null ?
                                 Double.parseDouble((String)fullProperties.get("redisObjectMaxSizeKB")) : null;
         log.debug("Redis Object Max Size KB: {}", redisObjectMaxSize);
@@ -59,6 +69,10 @@ public class RedisClient {
             this.jedisClient = jedisFactory.createJedisClient(redisUrl, redisPort);
 
             if (this.jedisClient != null) {
+                //Select the correct index if specified
+                if(this.redisIndex != null) {
+                    this.jedisClient.select(this.redisIndex);
+                }
                 // Authenticate if needed
                 if(StringUtils.isNotEmpty(redisPassword)) {
                     this.jedisClient.auth(redisPassword);
@@ -230,6 +244,10 @@ public class RedisClient {
                     ((double)redisValue.length/1024) <= this.redisObjectMaxSize) {
                 log.debug("Caching object with key \"{}\"", sql);
                 this.jedisClient.set(sql.getBytes(), redisValue);
+                // Set the object expiration if specified
+                if(this.redisExpiration != null) {
+                    this.jedisClient.expire(sql.getBytes(), this.redisExpiration);
+                }
             } else {
                 log.debug("Object not cached because size is too large. Key: {}", sql);
             }

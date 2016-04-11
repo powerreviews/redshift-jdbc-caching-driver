@@ -86,6 +86,22 @@ public class RedisClientTest {
     }
 
     @Test
+    public void testConstructorRedisIndex() {
+        String jdbcUrl = "jdbc:redshiftcached://redshiftHost:redshiftPort/redshiftDb?redisUrl=redisHost&redisIndex=3";
+
+        Jedis jedisClientMock = mock(Jedis.class);
+
+        JedisFactory jedisFactoryMock = mock(JedisFactory.class);
+        when(jedisFactoryMock.createJedisClient(anyString(), anyInt())).thenReturn(jedisClientMock);
+
+        new RedisClient(jdbcUrl, null, jedisFactoryMock);
+
+        verify(jedisFactoryMock).createJedisClient("redisHost", null);
+        verify(jedisClientMock).select(3);
+        verify(jedisClientMock).info();
+    }
+
+    @Test
     public void testConstructorHostUrlProperties() {
         String jdbcUrl = "jdbc:redshiftcached://redshiftHost:redshiftPort/redshiftDb?redisUrl=redisHostURL";
 
@@ -205,6 +221,39 @@ public class RedisClientTest {
 
         verify(statementMock).executeQuery(sql);
         verify(jedisClientMock, never()).set(any(byte[].class), any(byte[].class));
+        assertNotNull(result);
+    }
+
+    @Test
+    public void testExecuteNonCachedQueryWithExpiration() throws SQLException {
+        String jdbcUrl = "jdbc:redshiftcached://redshiftHost:redshiftPort/redshiftDb?redisUrl=redisHost&redisExpiration=60";
+        String sql = "select * from test";
+
+        Jedis jedisClientMock = mock(Jedis.class);
+        when(jedisClientMock.get(sql.getBytes())).thenReturn(null);
+
+        JedisFactory jedisFactoryMock = mock(JedisFactory.class);
+        when(jedisFactoryMock.createJedisClient(anyString(), anyInt())).thenReturn(jedisClientMock);
+
+        MockResultSet resultSetMock = new MockResultSet("myMockRS");
+        Integer[] columnA = new Integer[100];
+        String[] columnB = new String[100];
+        for(int i = 0; i < 100; i++) {
+            columnA[i] = i + 1;
+            columnB[i] = "record" + (i + 1);
+        }
+        resultSetMock.addColumn("columnA", columnA);
+        resultSetMock.addColumn("columnB", columnB);
+
+        Statement statementMock = mock(Statement.class);
+        when(statementMock.executeQuery(sql)).thenReturn(resultSetMock);
+
+        RedisClient redisClient = new RedisClient(jdbcUrl, null, jedisFactoryMock);
+        ResultSet result = redisClient.executeQuery(statementMock, sql);
+
+        verify(statementMock).executeQuery(sql);
+        verify(jedisClientMock).set(any(byte[].class), any(byte[].class));
+        verify(jedisClientMock).expire(sql.getBytes(), 60);
         assertNotNull(result);
     }
 

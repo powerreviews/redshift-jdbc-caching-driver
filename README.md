@@ -60,6 +60,8 @@ The following parameters can be passed to the driver as JDBC driver properties o
  * `redisPort`: the Redis server port. Optional.
  * `redisPassword`: the Redis connection password. Optional.
  * `redisObjectMaxSizeKB`: if specified, the driver will not cache any result set that is larger than `redisObjectMaxSizeKB` kilobytes.
+ * `redisExpiration`: if specified, an expiration time of `redisExpiration` seconds is set for all result sets added to Redis.
+ * `redisIndex`: if specified, the driver will select the specified Redis index after connecting to the cache server.
  * `poolValidationQuery`: if the driver is used in a connection pool, then we need to make sure we don't cache the connection validation query. The query specified in this property (e.g. `SELECT 1`) will never be cached.
 
 This is how you can pass properties to the driver using the JDBC URL:
@@ -78,7 +80,6 @@ and `ResultSet executeQuery()` are supported at the moment.
 * Correctly support `setDate`, `setTime` and `setTimestamp` methods with `Calendar` parameter in `PreparedStatement`. At the
 moment the provided `Date`/`Time`/`Timestamp` is used directly to compute the result set cache key instead of using the `Calendar`
 to compute the correct value.
-* Add property to set expiration of cached result sets
 * Add ability to specify keys maximum size
 <a id="additionalResources"></a>
 #### Additional Resources
