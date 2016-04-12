@@ -92,5 +92,5 @@ to compute the correct value.
 <a id="credits"></a>
 #### Credits
 This project makes used of code from the following projects:
-* [Boilerplate JDBC Wrapper](https://www.redfin.com/blog/2011/03/boilerplate_jdbc_wrapper.html) by Michael Smedberg
+* [Boilerplate JDBC Wrapper](https://www.redfin.com/blog/2011/03/boilerplate_jdbc_wrapper.html) by [Michael Smedberg](https://github.com/smedberg)
 * [MySQL Connector J](https://github.com/mysql/mysql-connector-j)
