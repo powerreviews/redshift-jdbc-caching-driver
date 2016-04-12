@@ -69,8 +69,8 @@ This is how you can pass properties to the driver using the JDBC URL:
 jdbc:redshiftcached://redshifturl:5439/schemaName?redisUrl=localhost&redisObjectMaxSizeKB=300&poolValidationQuery=SELECT%201
 ```
 If a parameter is specified both in the JDBC driver properties and in the URL, the value specified in the URL takes precedence.
-<a id="knowIssuesTodos"></a>
-#### Know Issues and TODOs
+<a id="knowIssues"></a>
+#### Know Issues
 * If `?` is used as literal in a `PreparedStatement`, the SQL statement associated to the prepared statement that is used
 as the cache key is incorrect. This might not be an issue as long as the key is unique.
 * Caching is not supported for complex SQL types such as `CLOB`, `BLOB`, `ROWID`, `ARRAY`, etc. in `PreparedStatement`.
