@@ -77,15 +77,18 @@ as the cache key is incorrect. This might not be an issue as long as the key is 
 If methods such as `setBlob()`, `setArray()`, etc. are called on a `PreparedStatement`, the statement result will not be cached.
 * Caching is not supported for `boolean execute(...)` methods in `Statement` and `PreparedStatement`. Only methods `ResultSet executeQuery(String sql)`
 and `ResultSet executeQuery()` are supported at the moment.
+
 <a id="todos"></a>
 #### TODOs
 * Correctly support `setDate`, `setTime` and `setTimestamp` methods with `Calendar` parameter in `PreparedStatement`. At the
 moment the provided `Date`/`Time`/`Timestamp` is used directly to compute the cache key instead of using the `Calendar`
 to compute the correct value.
 * Add ability to specify keys maximum size
+
 <a id="additionalResources"></a>
 #### Additional Resources
 * [Configure a RedShift JDBC connection](http://docs.aws.amazon.com/redshift/latest/mgmt/configure-jdbc-connection.html)
+ 
 <a id="credits"></a>
 #### Credits
 This project makes used of code from the following projects:
