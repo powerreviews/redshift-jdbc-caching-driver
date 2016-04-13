@@ -80,6 +80,7 @@ and `ResultSet executeQuery()` are supported at the moment.
 
 <a id="todos"></a>
 #### TODOs
+* Optimize keys by cleaning up queries before using them as keys. Possibly add string compression for keys.
 * Correctly support `setDate`, `setTime` and `setTimestamp` methods with `Calendar` parameter in `PreparedStatement`. At the
 moment the provided `Date`/`Time`/`Timestamp` is used directly to compute the cache key instead of using the `Calendar`
 to compute the correct value.
