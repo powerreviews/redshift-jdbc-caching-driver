@@ -175,6 +175,12 @@ public class RedisClient {
         byte[] redisResultSet = null;
         try {
             redisResultSet = this.jedisClient.get(sql.getBytes());
+            if(redisResultSet != null) {
+                // Update the object expiration if specified
+                if(this.redisExpiration != null) {
+                    this.jedisClient.expire(sql.getBytes(), this.redisExpiration);
+                }
+            }
         } catch(JedisConnectionException jce) {
             log.error("Error retrieving object from Redis. Key: {}", sql);
             return null;
