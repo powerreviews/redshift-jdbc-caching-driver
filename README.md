@@ -60,7 +60,7 @@ The following parameters can be passed to the driver as JDBC driver properties o
  * `redisPort`: the Redis server port. Optional.
  * `redisPassword`: the Redis connection password. Optional.
  * `redisObjectMaxSizeKB`: if specified, the driver will not cache any result set that is larger than `redisObjectMaxSizeKB` kilobytes.
- * `redisExpiration`: if specified, an expiration time of `redisExpiration` seconds is set for all result sets added to Redis.
+ * `redisExpiration`: if specified, an expiration time of `redisExpiration` seconds is set for all result sets added to Redis. The expiration of a key is updated every time the key is accessed.
  * `redisIndex`: if specified, the driver will select the specified Redis index after connecting to the cache server. This is like executing `SELECT <ix>` in Redis.
  * `poolValidationQuery`: if the driver is used in a connection pool, then we need to make sure we don't cache the connection validation query. The query specified in this property (e.g. `SELECT 1`) will never be cached.
 
