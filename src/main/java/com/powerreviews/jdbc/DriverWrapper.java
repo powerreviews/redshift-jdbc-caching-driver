@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  */
 public class DriverWrapper implements Driver {
     // The class of the driver that we're wrapping
-    public static final String WRAPPED_DRIVER = "com.amazon.redshift.jdbc41.Driver";
+    public static final String WRAPPED_DRIVER = "com.amazon.redshift.jdbc42.Driver";
 
     // The scheme of the driver we're wrapping. For instance, if the JDBC URL for
     // the DB we want to connect to is:

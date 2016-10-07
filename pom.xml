@@ -4,7 +4,7 @@
 
     <groupId>com.powerreviews</groupId>
     <artifactId>redshift-jdbc-cached-driver</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
     <packaging>jar</packaging>
 
     <name>redshift-jdbc-cached-driver</name>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>redshift</artifactId>
-            <version>JDBC41-1.1.10.1010</version>
+            <version>JDBC42-1.1.17.1017</version>
         </dependency>
 
         <dependency>
