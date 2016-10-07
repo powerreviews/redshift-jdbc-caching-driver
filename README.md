@@ -52,7 +52,7 @@ mvn install
 ```
 You will find two JAR files in the target directory, one with dependencies and one without: use the one most appropriate for your environment.
 
-You can also find a pre-compiled version of the driver in the [libs](libs) folder of the project. These JARs have been compiled using Java 7.
+You can also find a pre-compiled version of the driver in the [libs](libs) folder of the project. These JARs have been compiled using [Java 7](libs/1.7) and [Java 8](libs/1.8).
 <a id="configurationParameters"></a>
 #### Configuration Parameters
 The following parameters can be passed to the driver as JDBC driver properties or as part of the JDBC driver URL:
