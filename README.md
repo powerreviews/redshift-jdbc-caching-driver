@@ -44,7 +44,7 @@ jdbc:redshiftcached://redshifturl:5439/schemaName?redisUrl=localhost
 #### Build Instructions and Compiled libraries
 Since the Amazon RedShift JDBC Driver is not available on Maven public repositories, you need to deploy the correct version of the driver into your local Maven repo:
 ```
-mvn install:install-file -Dfile=<path-to-file> -DgroupId=com.amazonaws -DartifactId=redshift -Dversion=JDBC41-1.1.10.1010 -Dpackaging=jar
+mvn install:install-file -Dfile=<path-to-file> -DgroupId=com.amazonaws -DartifactId=redshift -Dversion=JDBC42-1.1.17.1017 -Dpackaging=jar
 ```
 After you have installed the Amazon RedShift JDBC Driver locally, simply run:
 ```
