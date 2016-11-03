@@ -72,7 +72,7 @@
 		  <executions>
 		    <execution>
 		      <id>install-amazon-driver</id>
-		      <phase>initialize</phase>
+		      <phase>pre-clean</phase>
 		      <goals>
 			<goal>install-file</goal>
 		      </goals>
