@@ -65,6 +65,27 @@
 
     <build>
         <plugins>
+	    <plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-install-plugin</artifactId>
+		  <version>2.5.2</version>
+		  <executions>
+		    <execution>
+		      <id>install-amazon-driver</id>
+		      <phase>initialize</phase>
+		      <goals>
+			<goal>install-file</goal>
+		      </goals>
+		      <configuration>
+			<file>libs/RedshiftJDBC42-1.1.17.1017.jar</file>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>redshift</artifactId>
+			<version>JDBC42-1.1.17.1017</version>
+			<packaging>jar</packaging>
+		      </configuration>
+		    </execution>
+		  </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
