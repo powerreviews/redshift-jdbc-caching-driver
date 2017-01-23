@@ -2,8 +2,6 @@ package com.powerreviews.jdbc.redis;
 
 import com.sun.rowset.CachedRowSetImpl;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
@@ -18,11 +16,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by dado on 4/1/16.
  */
 public class RedisClient {
-    final private static Logger log = LogManager.getLogger(RedisClient.class);
+    final private static Logger log = LoggerFactory.getLogger(RedisClient.class);
 
     private Jedis jedisClient;
     private String validationQuery;
@@ -81,8 +82,7 @@ public class RedisClient {
                 this.jedisClient.info();
             }
         } catch(JedisConnectionException jce) {
-            log.error("Unable to connect to Redis server:");
-            log.error(jce);
+            log.error("Unable to connect to Redis server:", jce);
             this.jedisClient = null;
         }
     }
@@ -150,8 +150,7 @@ public class RedisClient {
             try {
                 this.jedisClient.close();
             } catch(JedisConnectionException jce) {
-                log.error("Unable to close connection with Redis server:");
-                log.error(jce);
+                log.error("Unable to close connection with Redis server:", jce);
             }
         }
     }
@@ -258,11 +257,10 @@ public class RedisClient {
                 log.debug("Object not cached because size is too large. Key: {}", sql);
             }
         } catch (IOException e) {
-            log.error(e);
+            log.error("Unable to cache object", e);
             // Nothing to do, return the result set without caching
         } catch (JedisConnectionException jce) {
-            log.error("Unable to cache object");
-            log.error(jce);
+            log.error("Unable to cache object", jce);
             // Nothing to do, return the result set without caching
         } finally {
             if(out != null) {
