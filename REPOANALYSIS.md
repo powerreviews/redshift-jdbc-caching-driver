@@ -203,3 +203,61 @@ Derived from git history; current HEAD is `1fe44b6`.
 - **Activity level**: 1 commit in the last 90 days (`1b6b0c7` "Add .whitesource configuration file", 2026-03-23). Repo is effectively dormant.
 - **Hot spots** (top files by churn over the last 6 months): only `.whitesource` was touched in the last 6 months. All-time top-churn files for context: `README.md` (11 revisions), `pom.xml` (9), `src/main/java/com/powerreviews/jdbc/redis/RedisClient.java` (4).
 - **Recent major changes**: _No major changes in the last 6 months._ The only commit was adding a `.whitesource` dependency-scanner config file.
+
+---
+
+## Revised Summary
+_Revised on 2026-05-12 against commit a2ac92c_
+
+### Overview
+The `redshift-jdbc-caching-driver` is a small in-house JDBC driver shim (`com.powerreviews:redshift-jdbc-cached-driver:0.3`) that wraps the Amazon Redshift JDBC42 driver and caches `executeQuery` result sets in Redis keyed by the rendered SQL text — built circa 2016 to relieve repeated expensive aggregation queries on Redshift between ETL refresh windows, with cache invalidation explicitly left to the calling ETL. It is a leaf library: no org repo declares it as a Maven dependency in the org-summary dependency map, and the org has migrated analytics from Redshift toward Snowflake (the warehouse used by `analytics-dbt`, `analytics-dbt-loader`, `data-science-analytics`, `pwr-streamlit`, `pwr-tableau`, etc.), leaving this driver as an orphaned, dormant artifact distributed by checking pre-built JARs into `libs/1.7/` and `libs/1.8/` rather than via Nexus.
+
+### Tech Stack
+| Category | Technology | Version |
+|----------|-----------|---------|
+| Language | Java | 1.8 source/target |
+| Framework | JDBC SPI (`java.sql.Driver`) | JDBC 4.2 |
+| Database | Amazon Redshift JDBC Driver (bundled JAR; not on Maven Central) | JDBC42-1.1.17.1017 |
+| Database | Redis (Jedis client) | Jedis 2.8.0 |
+| Build Tool | Apache Maven (assembly + install-file pre-clean) | maven-assembly-plugin, maven-install-plugin 2.5.2, maven-compiler-plugin 3.3 |
+| CI/CD | GitHub Actions (TruffleHog secrets scan only — no build/publish pipeline) | scheduled cron `0 14 * * 1-5` |
+| Cloud/Infra | AWS Redshift + AWS ElastiCache Redis (assumed deployment target; not configured in repo) | n/a |
+
+### Consumers
+| Consumer | Type | How They Use It |
+|----------|------|----------------|
+| _No org repo declares a Maven dep on `com.powerreviews:redshift-jdbc-cached-driver`_ | n/a | Not referenced by `parent-pom`, `pwr-spring-parent-bom`, `analytics-etl`, `data-mover-utilities`, `data-science-analytics`, `pwr-tableau`, `analytics-utilities`, `reporting`, `database`, or any other Redshift-touching repo per the org dependency map. The JAR is distributed by manual download from `libs/` and so consumers would be undeclared. |
+| TruffleHog (`edplato/trufflehog-actions-scan`) + Slack `github-token-scan` channel | CI System / Comms | Scheduled weekday secrets scan; alerts on failure. |
+| Mend/WhiteSource (`.whitesource`) | CI System | Org-wide vulnerability scanning via the policy in `whitesource-config`. |
+
+### Dependencies on Org Repos
+| Repo | Reason |
+|------|--------|
+| _none_ | `pom.xml` has no `com.powerreviews` deps; the project does not inherit from `parent-pom` or `pwr-spring-parent-bom` (predates both as a convention here), does not use `pwr-commons`/`pwr-java-utils`, does not consume `pwr-event-logs`, and is not deployed via `pwr-docker-service`/`pwr-service-deploy-orb`. The only org-level integration is the shared `whitesource-config` policy. |
+
+### Upgrade Alerts
+| Dependency | Current Version | Issue | Severity |
+|-----------|----------------|-------|----------|
+| Amazon Redshift JDBC Driver | JDBC42-1.1.17.1017 (2016) | EOL; numerous CVEs fixed in later AWS releases; not on Maven Central, sideloaded from `libs/` | Critical |
+| Jedis | 2.8.0 (2016) | Major-version EOL; CVE-relevant fixes accrued through 5.x; the rest of the org's Redis-using Ruby/Java stack has moved well past this | Critical |
+| `com.sun.rowset.CachedRowSetImpl` (internal JDK API used in `RedisClient`) | n/a | Internal `com.sun.*` API removed/relocated in JDK 9+; will not run on a modern JDK without `--add-opens` flags. Hard blocker for any consumer adopting Java 11/17/21. | Critical |
+| Java target | 1.8 | Oracle public-update EOL passed; most active org services target 11/17 | Severe |
+| Apache Commons Lang 3 | 3.4 (2015) | Well behind current 3.x | Severe |
+| Logback (classic/core) | 1.1.7 (Dependabot has open bumps per recent activity) | CVE-2023-6378 / CVE-2024-12798 fixed in 1.2.13+/1.5.x | Severe |
+| Mockito | 1.10.19 (test scope) | Mockito 1.x abandoned | Severe |
+| MockRunner-JDBC | 1.1.1 (test scope) | Long unmaintained | Severe |
+| `actions/checkout@master` in `secrets-scan.yml` | floating ref | Mutable ref — supply-chain risk for GitHub Actions, contradicts the SHA-pinning pattern used elsewhere in the org | Severe |
+
+### Coupling Profile
+| Dependency | Protocol | Frequency Pattern | Failure Mode |
+|-----------|----------|-------------------|--------------|
+| Amazon Redshift (via wrapped `com.amazon.redshift.jdbc42.Driver`) | sync JDBC (Postgres wire) | per-request (every `executeQuery` not satisfied from cache) | hard — `connect()` and uncached `executeQuery` propagate `SQLException` to the caller without retry |
+| Redis (via Jedis 2.8 — `RedisClient.java`) | sync TCP (Jedis SDK) | per-request (`GET` on lookup, `SET[EX]` on miss, `EXPIRE` refresh on hit) | soft — `RedisClient` catches `JedisConnectionException` on construction and on every op, logs, and silently falls through to direct Redshift execution; an unreachable Redis degrades into pass-through with no circuit breaker |
+| Slack `github-token-scan` (CI) | webhook (outbound, `rtCamp/action-slack-notify`) | event-triggered (workflow failure) | soft — notification only |
+| TruffleHog scan | GitHub Action runtime | scheduled (cron `0 14 * * 1-5`, weekdays 14:00 UTC) | soft — failure pings Slack, no enforcement |
+| Mend/WhiteSource (`.whitesource`) | GitHub App scan | scheduled (org policy) | soft |
+
+### Architectural Notes
+- **Shared infrastructure**: This is one of seven repos the org-summary attributes to Redshift (`analytics-etl`, `analytics-utilities`, `data-mover-utilities`, `data-science-analytics`, `database`, `pwr-tableau`, `redshift-jdbc-caching-driver`). It is also conceptually a client of the shared ElastiCache Redis fleet that `pwr-redis` / `elasticache-infrastructure` provision — though this repo carries zero Terraform/Ansible and ships no deployment, so any actual Redis endpoint is supplied by whichever (undeclared) consumer embeds the JAR. The driver's design — opaque SQL-text key, no namespacing, no eviction policy beyond a per-key TTL — would not be safe to point at a shared multi-tenant Redis without a dedicated DB index (`redisIndex`) per consumer; nothing in the repo or org context confirms whether such isolation exists in production.
+- **Bounded-context overlaps**: None. The driver has no domain model — it serializes opaque `CachedRowSetImpl` byte arrays. No overlap with the org's UGC/Review/Order/Merchant bounded contexts surfaced in `pwr-data-model`, `core-data-services`, `write-services`, or `enterprise-services`.
+- **Architectural evolution**: The repo is effectively frozen — the last functional commit was `46f976a` "Modified logging system to Logback" in **January 2017** (~9 years ago); since then activity is limited to README tweaks (2018-2020), a TruffleHog workflow (2020), Dependabot logback/junit bumps, and a `.whitesource` file added 2026-03-23. Meanwhile the org has migrated its analytics warehouse from Redshift to Snowflake (visible in `analytics-dbt*`, `pwr-terraform-dms` DMS pipelines feeding Snowflake RAW, `analytics-etl`'s Snowflake sinks, `pwr-streamlit`), which strongly suggests this driver's original use case — caching Redshift aggregations between ETL refreshes — has been displaced by Snowflake-native materializations and Tableau extracts. The repo also predates the org's standardization on `parent-pom`/`pwr-spring-parent-bom`, `pwr-docker-service`, `pwr-nexus` artifact distribution, and `pwr-service-deploy-orb` deploys; nothing has been done to retrofit it. Given the JDK 9+ incompatibility of `com.sun.rowset.CachedRowSetImpl` plus the lack of any declared consumers in the org dependency map, this repo is a strong candidate for the "audit and prune dormant repos" priority called out in the org health score.
